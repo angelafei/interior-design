@@ -1,0 +1,52 @@
+import * as T from 'three';
+export const surfaceHeights={table:.405,stone:.518,petal:.405,island:.92,cabinet:.70,stool:.47};
+const tabletop=new Set(['tray','candles','books','clock','bonsai','frame','bowl','vase','mobile','mushroom']);
+export function snapObject(object,objects,room,{walls=true,surfaces=true}={}){
+ object.updateMatrixWorld(true);
+ let box=new T.Box3().setFromObject(object);
+ if(walls){for(const [axis,half] of [['x',room.width/2],['z',room.depth/2]]){const low=box.min[axis]+half,high=half-box.max[axis];if(Math.abs(low)<.18)object.position[axis]-=low;else if(Math.abs(high)<.18)object.position[axis]+=high;}object.updateMatrixWorld(true);box.setFromObject(object);}
+ if(surfaces&&tabletop.has(object.userData.catalogId)){
+  const candidates=objects.children.filter(o=>o!==object&&surfaceHeights[o.userData.catalogId]).map(o=>({o,b:new T.Box3().setFromObject(o),height:o.position.y+surfaceHeights[o.userData.catalogId]*o.scale.y})).filter(({o,b})=>{if(!(box.min.x>=b.min.x-.015&&box.max.x<=b.max.x+.015&&box.min.z>=b.min.z-.015&&box.max.z<=b.max.z+.015))return false;const local=new T.Box3();o.traverse(m=>{if(m.isMesh){m.geometry.computeBoundingBox();const matrix=new T.Matrix4().copy(o.matrixWorld).invert().multiply(m.matrixWorld);local.union(m.geometry.boundingBox.clone().applyMatrix4(matrix));}});return [box.min.x,box.max.x].every(x=>[box.min.z,box.max.z].every(z=>{const p=o.worldToLocal(new T.Vector3(x,box.min.y,z));return p.x>=local.min.x-.01&&p.x<=local.max.x+.01&&p.z>=local.min.z-.01&&p.z<=local.max.z+.01;}));}).sort((a,b)=>b.height-a.height);
+  const target=candidates[0];
+  if(target){object.position.y+=target.height-box.min.y+.003;object.userData.autoSurface=true;}
+  else if(object.userData.autoSurface){object.position.y-=box.min.y;delete object.userData.autoSurface;}
+ }
+ object.updateMatrixWorld(true);
+}
+export function measurement(object,objects,room){
+ const b=new T.Box3().setFromObject(object),size=b.getSize(new T.Vector3());let closest=null;
+ for(const o of objects.children){if(o===object||o.userData.catalogId==='rug')continue;if(surfaceHeights[o.userData.catalogId]&&Math.abs(b.min.y-(o.position.y+surfaceHeights[o.userData.catalogId]*o.scale.y))<.025)continue;const other=new T.Box3().setFromObject(o);if(other.max.y<=b.min.y+.02||b.max.y<=other.min.y+.02)continue;const dx=Math.max(0,b.min.x-other.max.x,other.min.x-b.max.x),dz=Math.max(0,b.min.z-other.max.z,other.min.z-b.max.z),gap=Math.hypot(dx,dz);if(!closest||gap<closest.gap)closest={gap,name:o.userData.name};}
+ return {b,size,closest,left:b.min.x+room.width/2,right:room.width/2-b.max.x,back:b.min.z+room.depth/2,front:room.depth/2-b.max.z};
+}
+const KEY='forma-design-library-v1';
+export function readLibrary(storage=localStorage){const data=JSON.parse(storage.getItem(KEY)||'[]');if(!Array.isArray(data)||data.some(e=>!e||typeof e.id!=='string'||typeof e.name!=='string'||!e.design||!Array.isArray(e.design.items)))throw Error('方案資料格式不正確');return data;}
+export function writeEntry(entry,storage=localStorage){const entries=readLibrary(storage);const i=entries.findIndex(e=>e.id===entry.id);if(i>=0)entries[i]=entry;else entries.unshift(entry);storage.setItem(KEY,JSON.stringify(entries));return entries;}
+export function setupFeatures(ctx){
+ const {scene,renderer,camera,objects,getRoom,getSelected,state,restore,commit,refresh}=ctx;
+ const $=s=>document.querySelector(s);let currentId=null,currentName='客廳方案 01',measuring=true;
+ const download=(blob,name)=>{const a=document.createElement('a'),url=URL.createObjectURL(blob);a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);};
+ $('.view-top').insertAdjacentHTML('afterend','<div class="placement-options"><label><input type="checkbox" id="snap-walls" checked>貼牆</label><label><input type="checkbox" id="snap-surfaces" checked>桌面吸附</label><label><input type="checkbox" id="show-measure" checked>尺寸</label></div><div id="dimension-label"></div>');
+ $('#selection-properties').insertAdjacentHTML('beforeend','<section class="section" id="measurement-panel"><h3 class="section-title">尺寸與間距 <small>公尺</small></h3><div id="measurement-content"></div><p class="measurement-note">依物件外接矩形估算；包含旋轉與縮放。</p></section>');
+ $('.header-actions').insertAdjacentHTML('afterbegin','<button class="btn" id="export-image" title="匯出目前視角 PNG">匯出圖片</button>');
+ document.body.insertAdjacentHTML('beforeend',`<dialog id="design-library"><div class="scene-dialog-heading"><h2>我的方案</h2><button id="close-library" aria-label="關閉方案管理">✕</button></div><p>儲存在此瀏覽器，清除網站資料會一併移除。建議下載方案備份。</p><form id="design-save-form"><label>方案名稱<input id="design-name" maxlength="60" required></label><div class="library-actions"><button class="btn primary" type="submit">儲存目前方案</button><button class="btn" type="button" id="save-copy">另存新方案</button><button class="btn" type="button" id="backup-design">下載備份</button></div></form><p id="library-message" role="status"></p><div id="saved-designs"></div></dialog>`);
+ const updateName=()=>{$('.project strong').textContent=currentName;};
+ function cleanRender(){const visible=ctx.selection.visible;const helper=ctx.transform.getHelper(),gizmo=helper.visible;ctx.selection.visible=false;helper.visible=false;renderer.render(scene,camera);return ()=>{ctx.selection.visible=visible;helper.visible=gizmo;refresh();};}
+ function thumbnail(){const reset=cleanRender();try{const c=document.createElement('canvas');c.width=320;c.height=200;const c2=c.getContext('2d');c2.fillStyle='#eeece7';c2.fillRect(0,0,320,200);const source=renderer.domElement,r=Math.min(320/source.width,200/source.height);c2.drawImage(source,(320-source.width*r)/2,(200-source.height*r)/2,source.width*r,source.height*r);return c.toDataURL('image/jpeg',.75);}finally{reset();}}
+ $('#export-image').onclick=()=>{const reset=cleanRender();try{renderer.domElement.toBlob(blob=>{if(blob){download(blob,`${currentName}.png`);ctx.toast('已匯出目前視角的 PNG 圖片');}else ctx.toast('圖片匯出失敗');},'image/png');}catch(e){ctx.toast(`圖片匯出失敗：${e.message}`);}finally{reset();}};
+ function renderLibrary(){const list=$('#saved-designs');list.replaceChildren();let entries;try{entries=readLibrary();}catch(e){$('#library-message').textContent=e.message;return;}if(!entries.length)list.textContent='尚未儲存方案。';for(const entry of entries){const card=document.createElement('article');card.className='saved-design';if(entry.thumbnail){const img=document.createElement('img');img.src=entry.thumbnail;img.alt=entry.name;card.append(img);}const info=document.createElement('div'),title=document.createElement('strong'),meta=document.createElement('p'),open=document.createElement('button');title.textContent=entry.name;meta.textContent=`${new Date(entry.updated).toLocaleString('zh-TW')} · ${entry.design.items.length} 件物件`;open.className='btn';open.textContent='開啟';open.onclick=async()=>{try{await restore(entry.design);currentId=entry.id;currentName=entry.name;updateName();commit();$('#design-library').close();ctx.toast('已開啟方案；可用復原返回剛才的場景');}catch(e){$('#library-message').textContent=`開啟失敗：${e.message}`;}};info.append(title,meta,open);card.append(info);list.append(card);}}
+ function openLibrary(){try{if(!readLibrary().length){const old=JSON.parse(localStorage.getItem('forma-design')||'null');if(old?.items)writeEntry({id:crypto.randomUUID(),name:old.name||'舊版方案',updated:Date.now(),design:old});}}catch(e){ctx.toast(`讀取舊方案失敗：${e.message}`);}$('#design-name').value=currentName;$('#library-message').textContent='';renderLibrary();$('#design-library').showModal();}
+ $('#save').onclick=openLibrary;$('#nav-load').onclick=openLibrary;$('#close-library').onclick=()=>$('#design-library').close();
+ function save(copy){if(!$('#design-save-form').reportValidity())return;try{const name=$('#design-name').value.trim();if(!name)throw Error('請填寫方案名稱');const id=copy||!currentId?crypto.randomUUID():currentId,design={...state(),name};writeEntry({id,name,design,updated:Date.now(),thumbnail:thumbnail()});currentId=id;currentName=name;updateName();$('#save-status').textContent='已儲存至此瀏覽器';$('#library-message').textContent=copy?'已另存為新方案':'已儲存';renderLibrary();}catch(e){$('#library-message').textContent=`未儲存：${e.message}。若容量不足，請下載方案備份。`;}}
+ $('#design-save-form').onsubmit=e=>{e.preventDefault();save(false);};$('#save-copy').onclick=()=>save(true);
+ $('#backup-design').onclick=()=>download(new Blob([JSON.stringify({...state(),name:currentName},null,2)],{type:'application/json'}),`${currentName}.json`);
+ $('#design-save-form').insertAdjacentHTML('beforeend','<label class="restore-backup">匯入方案備份 <input type="file" id="restore-backup" accept=".json"></label>');
+ $('#restore-backup').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{if(file.size>40*1024*1024)throw Error('檔案不能超過 40 MB');const design=JSON.parse(await file.text());await restore(design);currentId=null;currentName=typeof design.name==='string'?design.name.slice(0,60):'匯入方案';updateName();commit();$('#design-library').close();ctx.toast('已匯入，請儲存為新方案');}catch(error){$('#library-message').textContent=`匯入失敗：${error.message}`;}finally{e.target.value='';}};
+ $('#show-measure').onchange=e=>{measuring=e.target.checked;refresh();};
+ return {
+  snap(o){snapObject(o,objects,getRoom(),{walls:$('#snap-walls').checked,surfaces:$('#snap-surfaces').checked});},
+  name:()=>currentName,
+  draw(){const o=getSelected(),label=$('#dimension-label');if(!o||!measuring){label.hidden=true;$('#measurement-panel').hidden=true;return;}$('#measurement-panel').hidden=false;const m=measurement(o,objects,getRoom());const fmt=n=>n<0?`超出 ${Math.abs(n).toFixed(2)}`:n.toFixed(2);$('#measurement-content').replaceChildren();for(const text of [`寬 ${m.size.x.toFixed(2)} × 深 ${m.size.z.toFixed(2)} × 高 ${m.size.y.toFixed(2)}`,`左牆 ${fmt(m.left)} ／ 右界 ${fmt(m.right)}`,`後牆 ${fmt(m.back)} ／ 前界 ${fmt(m.front)}`,m.closest?`最近物件：${m.closest.name} · ${m.closest.gap<.001?'外接範圍重疊':m.closest.gap.toFixed(2)+' m'}`:'無同高度鄰近物件']){const p=document.createElement('div');p.textContent=text;$('#measurement-content').append(p);}
+   const point=new T.Vector3((m.b.min.x+m.b.max.x)/2,m.b.max.y+.12,m.b.max.z).project(camera);const bounds=renderer.domElement.getBoundingClientRect();label.hidden=Math.abs(point.x)>1||Math.abs(point.y)>1;label.textContent=`${m.size.x.toFixed(2)} × ${m.size.z.toFixed(2)} × ${m.size.y.toFixed(2)} m`;label.style.left=`${(point.x+1)*bounds.width/2}px`;label.style.top=`${(1-point.y)*bounds.height/2}px`;
+  }
+ };
+}

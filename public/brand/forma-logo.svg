@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 254 48" fill="none">
+  <title>FORMA</title>
+  <desc>由平面圖牆線構成的 F，搭配幾何字標。</desc>
+  <path d="M6 42V6H42V14H14V22H34V30H14V42H6Z" fill="#A37155"/>
+  <path d="M42 24V42H24" stroke="#444C43" stroke-width="2"/>
+  <g stroke="#343D35" stroke-width="2.5" stroke-linejoin="miter">
+    <path d="M68 38V10H89M68 23H86"/>
+    <path d="M116 10C107 10 103 15 103 24S107 38 116 38 129 33 129 24 125 10 116 10Z"/>
+    <path d="M145 38V10H155C162 10 166 13 166 18S162 26 155 26H145M156 26 168 38"/>
+    <path d="M183 38V10L196 29 209 10V38"/>
+    <path d="M225 38 237 10 249 38M230 27H244"/>
+  </g>
+</svg>
