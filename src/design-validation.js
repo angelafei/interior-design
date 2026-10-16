@@ -6,6 +6,7 @@ export function validateDesign(data){
  for(const item of data.items){
   if(!item||typeof item.uid!=='string'||!item.uid||ids.has(item.uid)||typeof item.name!=='string')throw Error('方案物件識別或名稱不正確');ids.add(item.uid);
   if(!Array.isArray(item.position)||item.position.length!==3||!item.position.every(n=>Number.isFinite(n)&&Math.abs(n)<=100)||!Array.isArray(item.scale)||item.scale.length!==3||!item.scale.every(n=>Number.isFinite(n)&&n>=.1&&n<=3)||!Number.isFinite(item.rotation))throw Error('方案物件位置、旋轉或縮放不正確');
+  for(const key of ['locked','hidden'])if(item[key]!=null&&typeof item[key]!=='boolean')throw Error('物件鎖定或顯示狀態不正確');
   if(item.surface!=null&&!['plain','wood','fabric','stone'].includes(item.surface))throw Error('方案材質種類不正確');
   if(item.color!=null&&!/^#[0-9a-f]{6}$/i.test(item.color))throw Error('方案物件顏色不正確');
   if(item.roughness!=null&&(!Number.isFinite(item.roughness)||item.roughness<0||item.roughness>1))throw Error('方案材質粗糙度不正確');

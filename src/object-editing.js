@@ -1,0 +1,29 @@
+import {translationBlocked} from './collisions.js';
+import * as THREE from 'three';
+import {objectBounds,boundsInside} from './room-boundary.js';
+export const editable=o=>!!o&&o.visible!==false&&!o.userData.locked;
+// Validate the whole translation before moving anything, preserving relative spacing.
+export function translateTogether(items,delta,room,obstacles=items[0]?.parent?.children||[]){
+ if(!items.length||items.some(o=>!editable(o))||!delta.toArray().every(Number.isFinite))return false;
+ const others=obstacles.filter(o=>!items.includes(o));if(items.some(o=>translationBlocked(o,delta,others)))return false;
+ const next=items.map(o=>o.position.clone().add(delta));
+ if(items.some(o=>!boundsInside(objectBounds(o).translate(delta),room)))return false;
+ items.forEach((o,i)=>o.position.copy(next[i]));return true;
+}
+export function setupObjectEditing({objects,scene,transform,getRoom,getSelected,select,commit,refresh,toast}){
+ const $=s=>document.querySelector(s),picked=new Set(),pivot=new THREE.Object3D();scene.add(pivot);let multi=false,previous=new THREE.Vector3();
+ $('.view-switch').insertAdjacentHTML('afterbegin','<button id="show-objects">物件清單</button>');$('#show-objects').onclick=()=>{$('.inspector').classList.add('mobile-open');$('.objects').scrollIntoView({block:'nearest'});};
+ $('.objects').insertAdjacentHTML('afterbegin',`<div class="object-edit-tools"><button class="btn" id="multi-select" aria-pressed="false">多選</button><button class="btn" id="select-all">全選可編輯</button><button class="btn" id="clear-picked">清除選取</button></div><p class="object-edit-hint">Shift 點選家具，或用清單勾選；鎖定後不會被畫布選中。</p><div id="group-edit" class="hidden"><strong id="picked-count"></strong><p>整組移動保留相對位置，每次 10 cm。</p><div class="group-actions"><button class="btn" data-nudge="-0.1,0,0">← 左</button><button class="btn" data-nudge="0.1,0,0">右 →</button><button class="btn" data-nudge="0,0,-0.1">後 ↑</button><button class="btn" data-nudge="0,0,0.1">前 ↓</button><button class="btn" id="lock-picked">鎖定所選</button><button class="btn" id="hide-picked">隱藏所選</button></div></div>`);
+ const members=()=>[...picked].filter(o=>objects.children.includes(o)&&editable(o));
+ function attach(){if(members().length<2)return;const list=members();pivot.position.set(0,0,0);list.forEach(o=>pivot.position.add(o.position));pivot.position.divideScalar(list.length);previous.copy(pivot.position);document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode==='translate'));transform.setMode('translate');transform.showX=transform.showZ=true;transform.showY=false;transform.attach(pivot);}
+ function render(){const valid=members();picked.clear();valid.forEach(o=>picked.add(o));$('#no-selection').classList.toggle('hidden',!!getSelected()||valid.length>1);$('#group-edit').classList.toggle('hidden',!valid.length);$('#picked-count').textContent=`已選 ${valid.length} 件家具`;$('#multi-select').setAttribute('aria-pressed',String(multi));const list=$('#object-list');list.replaceChildren();objects.children.forEach(o=>{const row=document.createElement('div');row.className='object-edit-row';const check=document.createElement('input');check.type='checkbox';check.checked=picked.has(o);check.disabled=!editable(o);check.setAttribute('aria-label','多選 '+o.userData.name);check.onchange=()=>toggle(o);const name=document.createElement('button');name.className='object-row '+(getSelected()===o||picked.has(o)?'active':'');name.textContent=o.userData.name;name.disabled=!editable(o);name.onclick=e=>choose(o,e.shiftKey);const lock=document.createElement('button');lock.className='object-state';lock.textContent=o.userData.locked?'解鎖':'鎖定';lock.setAttribute('aria-label',lock.textContent+' '+o.userData.name);lock.onclick=()=>changeFlag([o],'locked',!o.userData.locked);const visibility=document.createElement('button');visibility.className='object-state';visibility.textContent=o.visible?'隱藏':'顯示';visibility.setAttribute('aria-label',visibility.textContent+' '+o.userData.name);visibility.onclick=()=>changeFlag([o],'hidden',o.visible);row.append(check,name,lock,visibility);list.append(row);});$('#object-count').textContent=`${objects.children.length} 個物件`;}
+ function clear(){picked.clear();select(null);render();}
+ function toggle(o,seed=false){if(!editable(o))return;const current=getSelected();if(seed&&!picked.size&&editable(current)&&current!==o)picked.add(current);if(picked.has(o))picked.delete(o);else picked.add(o);select(picked.size===1?[...picked][0]:null);render();attach();refresh();}
+ function choose(o,additive=false){if(!editable(o))return;if(additive||multi){toggle(o,true);return;}picked.clear();select(o);render();}
+ function changeFlag(list,key,value){list.forEach(o=>{if(key==='hidden'){o.visible=!value;o.userData.hidden=value;}else o.userData.locked=value;});picked.clear();select(null);commit();render();refresh();}
+ $('#multi-select').onclick=()=>{multi=!multi;render();};$('#select-all').onclick=()=>{picked.clear();objects.children.filter(editable).forEach(o=>picked.add(o));select(picked.size===1?[...picked][0]:null);render();attach();refresh();};$('#clear-picked').onclick=clear;
+ document.querySelectorAll('[data-nudge]').forEach(b=>b.onclick=()=>{if(translateTogether(members(),new THREE.Vector3(...b.dataset.nudge.split(',').map(Number)),getRoom())){attach();commit();refresh();}else toast('前方有家具或超出房間，已保留整組位置');});
+ $('#lock-picked').onclick=()=>changeFlag(members(),'locked',true);$('#hide-picked').onclick=()=>changeFlag(members(),'hidden',true);
+ function moved(){if(transform.object!==pivot)return false;const delta=pivot.position.clone().sub(previous);if(!translateTogether(members(),delta,getRoom()))pivot.position.copy(previous);previous.copy(pivot.position);refresh();return true;}
+ return {render,choose,clear,moved,isGroup:()=>transform.object===pivot,attach,reset(){picked.clear();transform.detach();},hasGroup:()=>members().length>1};
+}

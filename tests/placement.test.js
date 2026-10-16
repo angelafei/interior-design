@@ -1,0 +1,15 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import * as T from 'three';
+import {findPlacement} from '../src/placement.js';
+import {furniture} from '../src/models.js';
+import {defaultRoom} from '../src/room.js';
+import {objectBounds,boundsInside} from '../src/room-boundary.js';
+const overlap=(a,b)=>['x','y','z'].every(k=>Math.min(a.max[k],b.max[k])-Math.max(a.min[k],b.min[k])>1e-5);
+test('new hob avoids original coffee table at center',()=>{const hob=furniture('hob'),table=furniture('table');assert.ok(findPlacement(hob,[table],defaultRoom));assert.equal(overlap(objectBounds(hob),objectBounds(table)),false);assert.ok(boundsInside(objectBounds(hob),defaultRoom));});
+test('repeated additions all occupy separate spaces',()=>{const items=[];for(let i=0;i<8;i++){const o=furniture('hob');assert.ok(findPlacement(o,items,defaultRoom));assert.ok(items.every(v=>!overlap(objectBounds(o),objectBounds(v))));items.push(o);}});
+test('full room rejects insertion and preserves proposed transform',()=>{const block=new T.Mesh(new T.BoxGeometry(6,3,5));block.position.y=1.5;const o=furniture('hob');o.position.set(.3,0,.5);const p=o.position.clone();assert.equal(findPlacement(o,[block],defaultRoom),false);assert.ok(o.position.equals(p));});
+test('replacement excludes old object without changing it',()=>{const old=furniture('hob'),next=furniture('hob'),p=old.position.clone();assert.ok(findPlacement(next,[],defaultRoom));assert.ok(next.position.equals(p));assert.ok(old.position.equals(p));});
+test('tabletop decorations may rest above supporting table',()=>{const table=furniture('island'),o=furniture('tray');assert.ok(findPlacement(o,[table],defaultRoom));assert.ok(objectBounds(o).min.y>=.92);});
+test('hidden and locked objects still reserve their space',()=>{const old=furniture('hob');old.visible=false;old.userData.locked=true;const next=furniture('hob');assert.ok(findPlacement(next,[old],defaultRoom));assert.equal(overlap(objectBounds(next),objectBounds(old)),false);});
+test('L room placement keeps rotated objects inside',()=>{const o=furniture('hob');o.rotation.y=.7;o.position.set(2,0,2);const r={...defaultRoom,shape:'l',cutWidth:2,cutDepth:2};assert.ok(findPlacement(o,[furniture('table')],r));assert.ok(boundsInside(objectBounds(o),r));});

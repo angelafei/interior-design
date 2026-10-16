@@ -1,0 +1,17 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import * as T from 'three';
+import {editable,translateTogether} from '../src/object-editing.js';
+import {defaultRoom} from '../src/room.js';
+import {validateDesign} from '../src/design-validation.js';
+import {applyPlan,sceneInfo,demoPlan} from '../src/ai-commands.js';
+const obj=(x=0,z=0)=>{const o=new T.Object3D();o.position.set(x,0,z);return o;};
+const design=()=>({version:1,items:[{id:'sofa',uid:'a',name:'沙發',position:[0,0,0],scale:[1,1,1],rotation:0,locked:true,hidden:false}]});
+test('group translation preserves spacing and heights',()=>{const a=obj(-1,0),b=obj(1,1);b.position.y=.5;assert.equal(translateTogether([a,b],new T.Vector3(.2,0,.3),defaultRoom),true);assert.deepEqual(b.position.clone().sub(a.position).toArray(),[2,.5,1]);});
+test('one out-of-bounds member rejects entire group atomically',()=>{const a=obj(),b=obj(2.9,0);assert.equal(translateTogether([a,b],new T.Vector3(1,0,0),defaultRoom),false);assert.equal(a.position.x,0);assert.equal(b.position.x,2.9);});
+test('L cutout rejects movement without distorting group',()=>{const a=obj(-1,-1),b=obj(0,0);assert.equal(translateTogether([a,b],new T.Vector3(2,0,2),{...defaultRoom,shape:'l',cutWidth:2,cutDepth:2}),false);assert.equal(a.position.x,-1);});
+test('hidden and locked members cannot be moved',()=>{for(const type of ['locked','hidden']){const a=obj(),b=obj(1,0);if(type==='locked')b.userData.locked=true;else b.visible=false;assert.equal(editable(b),false);assert.equal(translateTogether([a,b],new T.Vector3(.1,0,0),defaultRoom),false);assert.equal(a.position.x,0);}});
+test('non-finite or invalid height movement is rejected',()=>{for(const d of [new T.Vector3(NaN,0,0),new T.Vector3(0,-1,0),new T.Vector3(0,4,0)])assert.equal(translateTogether([obj()],d,defaultRoom),false);});
+test('lock and visibility persist in JSON and legacy files remain valid',()=>{const d=design();d.items[0].hidden=true;assert.deepEqual(validateDesign(JSON.parse(JSON.stringify(d))),d);delete d.items[0].locked;delete d.items[0].hidden;assert.doesNotThrow(()=>validateDesign(d));});
+test('invalid lock and visibility flags are rejected',()=>{for(const key of ['locked','hidden']){const d=design();d.items[0][key]='false';assert.throws(()=>validateDesign(d));}});
+test('AI cannot change locked or hidden furniture',()=>{for(const key of ['locked','hidden']){const d=design();d.items[0].locked=false;d.items[0][key]=true;assert.equal(sceneInfo(d).furniture[0].editable,false);assert.throws(()=>applyPlan(d,{summary:'移除',commands:[{action:'removeFurniture',id:'a'}]}));assert.equal(demoPlan(d).commands.length,1);}});
