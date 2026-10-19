@@ -12,24 +12,24 @@ export const commandSchema=z.discriminatedUnion('action',[
  z.object({action:z.literal('moveFurniture'),id:uid,position:vec}).strict(),
  z.object({action:z.literal('rotateFurniture'),id:uid,degrees:z.number().finite().min(-360).max(360)}).strict(),
  z.object({action:z.literal('scaleFurniture'),id:uid,scale:z.number().min(.1).max(3)}).strict(),
- z.object({action:z.literal('changeMaterial'),id:uid,color,surface:z.enum(['plain','wood','fabric','stone'])}).strict(),
+ z.object({action:z.literal('changeColor'),id:uid,color}).strict(),
  z.object({action:z.literal('changeRoomColor'),target:z.enum(['wall','floor']),color}).strict()
 ]);
 export const planSchema=z.object({summary:z.string().min(1).max(1200),commands:z.array(commandSchema).max(30)}).strict();
 export const planJSONSchema=z.toJSONSchema(planSchema,{target:'draft-7'});
-export function sceneInfo(design){validateDesign(design);return {room:validateRoom(design.room||{}),furniture:design.items.map(i=>({id:i.uid,catalogId:i.id||'imported',name:i.name,position:i.position,rotationDegrees:i.rotation*180/Math.PI,scale:i.scale,color:i.color,surface:i.surface||'plain',editable:!i.imported&&!i.locked&&!i.hidden,locked:!!i.locked,hidden:!!i.hidden})),catalog:activeCatalog.map(c=>({id:c.id,name:c.name,category:c.category}))};}
+export function sceneInfo(design){validateDesign(design);return {room:validateRoom(design.room||{}),furniture:design.items.map(i=>({id:i.uid,catalogId:i.id||'imported',name:i.name,position:i.position,rotationDegrees:i.rotation*180/Math.PI,scale:i.scale,color:i.color,editable:!i.imported&&!i.locked&&!i.hidden,locked:!!i.locked,hidden:!!i.hidden})),catalog:activeCatalog.map(c=>({id:c.id,name:c.name,category:c.category}))};}
 function bounds(item){const o=furniture(item.id);o.position.fromArray(item.position);o.rotation.y=item.rotation;o.scale.fromArray(item.scale);const b=new T.Box3().setFromObject(o);o.traverse(m=>{m.geometry?.dispose();if(m.material)(Array.isArray(m.material)?m.material:[m.material]).forEach(v=>v.dispose());});return b;}
 const overlap=(a,b)=>['x','y','z'].every(k=>Math.min(a.max[k],b.max[k])-Math.max(a.min[k],b.min[k])>.025);
 export function applyPlan(design,raw){
  validateDesign(design);const plan=planSchema.parse(raw),next=structuredClone(design);next.room=validateRoom(next.room||{});const spatial=new Set();
  for(const c of plan.commands){if(c.action==='changeRoomColor'){next.room[c.target]=c.color;continue;}
-  if(c.action==='addFurniture'){if(next.items.some(i=>i.uid===c.id))throw Error('新增物件 ID 已存在');const def=catalog.find(d=>d.id===c.catalogId);next.items.push({id:c.catalogId,uid:c.id,name:def.name,color:def.color,surface:'plain',position:[...c.position],rotation:c.rotation*Math.PI/180,scale:[1,1,1],imported:null});spatial.add(c.id);continue;}
+  if(c.action==='addFurniture'){if(next.items.some(i=>i.uid===c.id))throw Error('新增物件 ID 已存在');const def=catalog.find(d=>d.id===c.catalogId);next.items.push({id:c.catalogId,uid:c.id,name:def.name,color:def.color,position:[...c.position],rotation:c.rotation*Math.PI/180,scale:[1,1,1],imported:null});spatial.add(c.id);continue;}
   const item=next.items.find(i=>i.uid===c.id);if(!item)throw Error('找不到指令指定的家具：'+c.id);if(item.locked||item.hidden)throw Error('請先解鎖並顯示家具，再使用 AI 修改');if(item.imported)throw Error('AI 暫不修改匯入模型，請使用手動工具');
   if(c.action==='removeFurniture'){next.items=next.items.filter(i=>i.uid!==c.id);spatial.delete(c.id);}
   if(c.action==='moveFurniture'){item.position=[...c.position];spatial.add(c.id);}
   if(c.action==='rotateFurniture'){item.rotation=c.degrees*Math.PI/180;spatial.add(c.id);}
   if(c.action==='scaleFurniture'){item.scale=[c.scale,c.scale,c.scale];spatial.add(c.id);}
-  if(c.action==='changeMaterial'){item.color=c.color;item.surface=c.surface;}
+  if(c.action==='changeColor'){item.color=c.color;delete item.surface;}
  }
  validateDesign(next);
  if(spatial.size&&next.items.some(i=>i.imported))throw Error('場景含匯入模型，暫停 AI 空間移動以避免未檢查的碰撞；仍可修改內建家具顏色');
@@ -41,4 +41,4 @@ export function applyPlan(design,raw){
  }
  return {design:next,plan};
 }
-export function demoPlan(design){const commands=[{action:'changeRoomColor',target:'wall',color:'#F5F0E8'}];for(const i of design.items.filter(i=>['sofa','cloud'].includes(i.id)&&!i.locked&&!i.hidden))commands.push({action:'changeMaterial',id:i.uid,color:'#D3D3D3',surface:'fabric'});return {summary:'離線固定示範：牆面改米白、沙發改淺灰織布。這不是 LLM 生成結果。',commands};}
+export function demoPlan(design){const commands=[{action:'changeRoomColor',target:'wall',color:'#F5F0E8'}];for(const i of design.items.filter(i=>['sofa','cloud'].includes(i.id)&&!i.locked&&!i.hidden))commands.push({action:'changeColor',id:i.uid,color:'#D3D3D3'});return {summary:'離線固定示範：牆面改米白、沙發改淺灰。這不是 LLM 生成結果。',commands};}

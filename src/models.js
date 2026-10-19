@@ -48,7 +48,26 @@ export const catalog = [
 const retiredIds=new Set(['tray','candles','books','clock','bonsai','frame','bowl','cushion','vase','mobile','mushroom']);
 export const activeCatalog=catalog.filter(item=>!retiredIds.has(item.id));
 export const isAvailable=id=>activeCatalog.some(item=>item.id===id);
-export const finishes=[{name:'亞麻米白',color:'#d4c8b2',roughness:1},{name:'暖灰織物',color:'#8e9188',roughness:1},{name:'焦糖皮革',color:'#ad7555',roughness:.48},{name:'森林綠',color:'#586854',roughness:.9},{name:'炭黑',color:'#3c4240',roughness:.65},{name:'霧粉',color:'#bc9590',roughness:.9}];
+export const finishes=[
+ {group:'柔和中性',name:'柔霧白',color:'#eeeae1',roughness:.88},
+ {group:'柔和中性',name:'象牙白',color:'#e1d8c8',roughness:.88},
+ {group:'柔和中性',name:'燕麥米',color:'#cdbda5',roughness:.88},
+ {group:'柔和中性',name:'沙岩米',color:'#b6a388',roughness:.88},
+ {group:'柔和中性',name:'暖灰',color:'#969187',roughness:.88},
+ {group:'柔和中性',name:'石墨黑',color:'#444844',roughness:.88},
+ {group:'溫暖色調',name:'杏桃',color:'#d3a17f',roughness:.88},
+ {group:'溫暖色調',name:'焦糖',color:'#b57752',roughness:.88},
+ {group:'溫暖色調',name:'陶土',color:'#a7624c',roughness:.88},
+ {group:'溫暖色調',name:'栗棕',color:'#7b5947',roughness:.88},
+ {group:'溫暖色調',name:'霧粉',color:'#c49c98',roughness:.88},
+ {group:'溫暖色調',name:'酒紅',color:'#70484c',roughness:.88},
+ {group:'自然沉靜',name:'鼠尾草',color:'#7f8a75',roughness:.88},
+ {group:'自然沉靜',name:'橄欖綠',color:'#85835f',roughness:.88},
+ {group:'自然沉靜',name:'森林綠',color:'#506251',roughness:.88},
+ {group:'自然沉靜',name:'霧藍',color:'#81949b',roughness:.88},
+ {group:'自然沉靜',name:'深海藍',color:'#455d68',roughness:.88},
+ {group:'自然沉靜',name:'靛青',color:'#4c536c',roughness:.88}
+];
 export function furniture(id,color){
  const root=new T.Group(); const def=catalog.find(d=>d.id===id)||catalog[0];
  const main=new T.MeshStandardMaterial({color:color||def.color,roughness:def.roughness??.86});main.name='finish';
@@ -234,4 +253,4 @@ export function furniture(id,color){
  }
  root.userData={catalogId:id,name:def.name,color:color||def.color};return root;
 }
-export function setFinish(obj,color,roughness=.85){obj.traverse(m=>{if(m.isMesh){const mats=Array.isArray(m.material)?m.material:[m.material];mats.forEach(mat=>{if(mat.name==='finish'||obj.userData.imported){mat.color?.set(color);mat.roughness=roughness;}});}});obj.userData.color=color;obj.userData.roughness=roughness;}
+export function setFinish(obj,color,roughness=.88){obj.traverse(m=>{if(m.isMesh){const mats=Array.isArray(m.material)?m.material:[m.material];mats.forEach(mat=>{if(mat.name==='finish'||obj.userData.imported){mat.color?.set(color);mat.roughness=roughness;if(mat.name==='finish'){mat.map=null;mat.bumpMap=null;mat.normalMap=null;}mat.needsUpdate=true;}});}});obj.userData.color=color;obj.userData.roughness=roughness;delete obj.userData.surface;}

@@ -1,6 +1,6 @@
 const KEY='forma-onboarding-v1';
 export function setupOnboarding(){
- const steps=[['加入第一件家具','點選左側素材庫的家具，即可加入空間；桌面也能拖入擺放。','#cards'],['換上喜歡的材質','選取家具後，在物件屬性調整顏色與木紋、織布或石材。','.swatches'],['分享你的空間','從「分享成果」下載空間圖片、平面圖或可繼續編輯的方案。','#share-results']];let index=0,target;
+ const steps=[['加入第一件家具','點選左側素材庫的家具，即可加入空間；桌面也能拖入擺放。','#cards'],['搭配喜歡的顏色','選取家具後，從精選色票或自訂選色調整家具顏色。','.color-palettes'],['分享你的空間','從「分享成果」下載空間圖片、平面圖或可繼續編輯的方案。','#share-results']];let index=0,target;
  const panel=document.createElement('section');panel.id='onboarding';panel.setAttribute('aria-label','首次使用引導');panel.innerHTML='<div class="tour-heading"><span id="tour-progress"></span><button id="tour-skip">略過引導</button></div><h2 id="tour-title"></h2><p id="tour-copy"></p><div class="tour-actions"><button class="btn" id="tour-back">上一步</button><button class="btn primary" id="tour-next">下一步</button></div>';document.body.append(panel);
  const $=s=>panel.querySelector(s);const remember=()=>{try{localStorage.setItem(KEY,'done');}catch{}};
  function finish(){remember();target?.classList.remove('tour-target');panel.hidden=true;}
