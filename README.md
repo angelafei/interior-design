@@ -1,6 +1,13 @@
 # FORMA 室內設計工作室
 
-Three.js + Vite 的 Web 3D 室內編輯器初版，繁體中文介面。
+[![CI](https://github.com/angelafei/interior-design/actions/workflows/ci.yml/badge.svg)](https://github.com/angelafei/interior-design/actions/workflows/ci.yml)
+[![Deploy](https://github.com/angelafei/interior-design/actions/workflows/pages.yml/badge.svg)](https://github.com/angelafei/interior-design/actions/workflows/pages.yml)
+
+Three.js + Vite 打造的瀏覽器 3D 室內設計工作室，支援家具配置、房型與材質調整、方案分享，以及經嚴格驗證的 AI 設計指令。介面採繁體中文。
+
+**[開啟線上 Demo](https://angelafei.github.io/interior-design/)** · [系統架構與技術決策](./docs/ARCHITECTURE.md) · [測試策略](./TESTING.md)
+
+> GitHub Pages Demo 提供完整編輯器與明確標示的離線 AI 示範。真實 LLM 功能需要可保護伺服器金鑰的 Node 部署，不能由純靜態 Pages 提供。
 
 ## 啟動
 
@@ -13,7 +20,7 @@ npm run dev -- --port 5174
 
 ## 已實作
 
-- 29 款可新增家具與大型陳設（另保留 11 款舊裝飾供讀取舊方案）、即時渲染的商品縮圖、分類與搜尋。
+- 38 款可新增家具與大型陳設（另保留 12 款舊家具／裝飾供讀取舊方案）、即時渲染的商品縮圖、分類與搜尋。
 - 點選加入或桌面拖放、場景選取、移動／旋轉／縮放工具、精確數值編輯，包含 0–3 公尺離地高度，可放置桌上擺件。
 - 替換、複製、刪除、40 步復原／重做。
 - 18 款策展式家具色彩與自訂選色；原生模型的非主體部件保留原色。
@@ -28,7 +35,7 @@ npm run dev -- --port 5174
 
 目前沒有真實商品後端或帳戶系統。未設定環境變數時使用示範商品與 localStorage。設定 `.env` 的 `VITE_API_BASE_URL` 可接上：
 
-- `GET /furniture` → 商品陣列，欄位與 `src/models.js` 的 catalog 一致。此版 id 須使用已有模型：以 `src/models.js` 中 catalog 的 34 個 id 為準。
+- `GET /furniture` → 商品陣列，欄位與 `src/models.js` 的 catalog 一致。此版 id 須使用已有模型：以 `src/models.js` 中 catalog 的 45 個 id 為準。
 - `POST /designs` → 儲存 JSON 方案，成功回傳 JSON。
 - `GET /designs/latest` → 最新方案 JSON；無方案回 404。
 
@@ -55,7 +62,7 @@ V 選取、G 移動、R 旋轉、S 縮放；Delete 刪除；Ctrl/⌘ Z 復原，
 
 ## 測試
 
-執行 `npm test` 跑 145 項自動化測試；`npm run check` 同時驗證測試及正式建置。完整涵蓋範圍、瀏覽器驗證紀錄與限制見 [TESTING.md](./TESTING.md)。
+執行 `npm test` 跑 145 項單元與整合測試；`npm run test:e2e` 在桌面與行動 Chromium 執行 Playwright 核心流程；`npm run check:all` 完成測試、正式建置及 E2E。GitHub Actions 會在 push 與 pull request 自動執行。完整範圍見 [TESTING.md](./TESTING.md)。
 
 
 ## 自由房型、表面、氣氛與分享
@@ -98,4 +105,4 @@ V 選取、G 移動、R 旋轉、S 縮放；Delete 刪除；Ctrl/⌘ Z 復原，
 
 桌上裝飾、靠枕及蘑菇桌燈已從素材庫下架，AI 也不能新增。仍保留立鏡、屏風、落地植栽與地毯。舊方案的小型裝飾仍可讀取及刪除。
 
-「寵物」分類包含木質貓跳台、拱門貓屋邊几、貓砂盆隱藏櫃、圓角寵物床、高架雙碗餵食台及人寵共用長凳；沿用新增避讓、家具配色、邊界／碰撞與方案儲存。尺寸為展示資料。
+「寵物」分類包含五款特色貓跳台／貓抓桶、拱門貓屋邊几、貓砂盆隱藏櫃、圓角寵物床、高架雙碗餵食台及人寵共用長凳；沿用新增避讓、家具配色、邊界／碰撞與方案儲存。舊「枝 木質貓跳台」已從素材庫下架，但仍可讀取既有方案。

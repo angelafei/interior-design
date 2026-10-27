@@ -5,6 +5,8 @@
 - `npm test`：執行 Node 內建測試（不需新增測試框架）。
 - `npm run test:coverage`：產生 Node 的行／分支覆蓋率報告。此數字不代表瀏覽器互動覆蓋率。
 - `npm run check`：執行測試及正式建置。
+- `npm run test:e2e`：以 Playwright 執行桌面與行動 Chromium 核心使用流程。
+- `npm run check:all`：執行單元／整合測試、正式建置及 E2E。
 
 本次結果：145 項自動化測試通過，0 失敗；正式建置通過。
 
@@ -43,11 +45,22 @@ GLB 測試以 Node FileReader 適配器提供 Blob 讀取，沒有測試真實�
 3. 方案列表損壞的條目改為顯示可理解的讀取錯誤。
 4. API 透過可注入的 fetch／storage 測試失敗情境，正式預設行為保持原樣。
 
+## Playwright E2E
+
+`e2e/studio.spec.js` 自動驗證：
+
+- 搜尋並加入家具、物件數更新及復原。
+- 2D／3D 視角切換。
+- AI 面板連線狀態與離線固定示範套用。
+- Pixel 7 viewport 沒有頁面級橫向溢出。
+
+GitHub Actions 在每次 push 與 pull request 使用 Chromium 執行上述流程，失敗時保留 Playwright 報告。
+
 ## 尚未覆蓋
 
 - Safari、Firefox、Android／iOS 實機、觸控手勢與效能基準。
 - 真實後端、身分驗證、CORS 與雲端多方案（目前 UI 為本機）。
-- 自動化瀏覽器 E2E／跨瀏覽器 CI；目前 UI 檢查透過 Codex 瀏覽器操作完成。
+- Firefox、WebKit／Safari 的自動化跨瀏覽器 CI。
 - 外部貼圖／壓縮資產、任意模型的完整相容性、圖片下載內容的像素比較。
 - 不規則桌面的精確表面吸附、精確碰撞檢測；現有尺寸與間距仍採外接矩形估算。
 
@@ -99,3 +112,7 @@ GLB 測試以 Node FileReader 適配器提供 Blob 讀取，沒有測試真實�
 ## 寵物家具
 
 新增六款模型自動納入幾何有效性、獨立材質與換色尺寸不變測試，共145項通過，建置通過。瀏覽器實測寵物分類為6件，六件依序加入後場景由7件變13件，未觀察到console error。
+
+## 貓跳台款式更新
+
+舊「枝 木質貓跳台」從可新增素材下架並保留舊方案相容性；新增森階、星糖、絨雪、緋花及青柚五款貓家具。模型測試會逐款檢查有效幾何、獨立材質及換色後尺寸穩定。

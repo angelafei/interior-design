@@ -1,12 +1,22 @@
 import * as T from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 export const catalog = [
+ {id:'cat-tree-solid',name:'森階 實木攀爬塔',en:'GROVE WOOD CAT TOWER',category:'寵物',price:5880,color:'#c29b68',size:'51 × 40 × 112 cm',fixedColor:true},
+ {id:'cat-tree-macaron',name:'星糖 矮階探索塔',en:'STARDROP LOW-STEP TOWER',category:'寵物',price:8290,color:'#91a9dc',size:'75 × 90 × 110 cm',fixedColor:true},
+ {id:'cat-tree-christmas',name:'絨雪 樹屋貓塔',en:'SNOWPLUSH TREE HOUSE',category:'寵物',price:6980,color:'#e7a9bd',size:'56 × 56 × 120 cm',fixedColor:true},
+ {id:'cat-tree-venus',name:'緋花 植境貓塔',en:'BLOOM GARDEN CAT TOWER',category:'寵物',price:9680,color:'#739653',size:'70 × 70 × 150 cm',fixedColor:true},
+ {id:'cat-barrel-lime',name:'青柚 雙層貓抓屋',en:'CITRUS DOUBLE CAT DEN',category:'寵物',price:4980,color:'#b8cf63',size:'38 × 38 × 90 cm',fixedColor:true},
  {id:'cat-tree',name:'枝 木質貓跳台',en:'BRANCH CAT TREE',category:'寵物',price:12800,color:'#b79a75',size:'80 × 65 × 150 cm'},
  {id:'cat-side-table',name:'拱 貓屋邊几',en:'ARCH CAT SIDE TABLE',category:'寵物',price:8600,color:'#c6b18f',size:'60 × 50 × 55 cm'},
  {id:'litter-cabinet',name:'隱 貓砂盆收納櫃',en:'HIDE LITTER CABINET',category:'寵物',price:14800,color:'#b6a084',size:'100 × 55 × 65 cm'},
  {id:'pet-bed',name:'巢 圓角寵物床',en:'NEST PET BED',category:'寵物',price:4200,color:'#aaa892',size:'90 × 65 × 24 cm'},
  {id:'pet-feeder',name:'食 高架雙碗餵食台',en:'DUO PET FEEDER',category:'寵物',price:2800,color:'#ad8d64',size:'60 × 30 × 25 cm'},
  {id:'pet-bench',name:'伴 人寵共用長凳',en:'TOGETHER PET BENCH',category:'寵物',price:16800,color:'#b49a78',size:'120 × 45 × 48 cm'},
+ {id:'curve-wood-chair',name:'弦木 低背休閒椅',en:'STRING WOOD LOUNGE CHAIR',category:'椅凳',price:13800,color:'#b98f67',size:'60 × 59 × 70 cm'},
+ {id:'frame-lounge-chair',name:'框影 木構布椅',en:'FRAME WOOD LOUNGE CHAIR',category:'椅凳',price:16800,color:'#d7c9b5',size:'73 × 65 × 71 cm'},
+ {id:'soft-arc-chair',name:'雲丘 圓弧單人椅',en:'CLOUDHILL LOUNGE CHAIR',category:'椅凳',price:22800,color:'#aeb8a4',size:'105 × 95 × 70 cm'},
+ {id:'lean-side-table',name:'倚線 C 型邊桌',en:'LEAN C SIDE TABLE',category:'桌几',price:7200,color:'#59655b',size:'56 × 34 × 61 cm'},
+ {id:'tier-trolley',name:'層行 雙層推車',en:'TIER MOBILE TROLLEY',category:'收納',price:9800,color:'#ddd7c8',size:'50 × 35 × 64 cm'},
  {id:'sink',name:'水槽流理台',en:'SINK CABINET',category:'廚房',price:18000,color:'#c7c2b4',size:'120 × 62 × 90 cm'},
  {id:'hob',name:'爐台與烤箱',en:'COOKING UNIT',category:'廚房',price:24000,color:'#c7c2b4',size:'90 × 62 × 90 cm'},
  {id:'fridge',name:'雙門冰箱',en:'REFRIGERATOR',category:'廚房',price:28000,color:'#b8bbb7',size:'76 × 72 × 185 cm'},
@@ -45,7 +55,7 @@ export const catalog = [
  {id:'stool',name:'原木小圓凳',en:'SOLID WOOD STOOL',category:'椅凳',price:3200,color:'#ae8860',size:'38 × 38 × 44 cm'},
 ];
 // Retain retired models for loading existing designs, but do not offer new additions.
-const retiredIds=new Set(['tray','candles','books','clock','bonsai','frame','bowl','cushion','vase','mobile','mushroom']);
+const retiredIds=new Set(['cat-tree','tray','candles','books','clock','bonsai','frame','bowl','cushion','vase','mobile','mushroom']);
 export const activeCatalog=catalog.filter(item=>!retiredIds.has(item.id));
 export const isAvailable=id=>activeCatalog.some(item=>item.id===id);
 export const finishes=[
@@ -70,7 +80,7 @@ export const finishes=[
 ];
 export function furniture(id,color){
  const root=new T.Group(); const def=catalog.find(d=>d.id===id)||catalog[0];
- const main=new T.MeshStandardMaterial({color:color||def.color,roughness:def.roughness??.86});main.name='finish';
+ const main=new T.MeshStandardMaterial({color:def.fixedColor?def.color:color||def.color,roughness:def.roughness??.86});main.name='finish';
  const wood=new T.MeshStandardMaterial({color:'#826244',roughness:.75});const dark=new T.MeshStandardMaterial({color:'#383b34',roughness:.7});
  const add=(geo,mat,x,y,z,rot)=>{const m=new T.Mesh(geo,mat);m.position.set(x,y,z);if(rot)m.rotation.set(...rot);m.castShadow=true;m.receiveShadow=true;root.add(m);return m;};
  const box=(w,h,d,x,y,z,mat=main,r=.04)=>add(new RoundedBoxGeometry(w,h,d,3,r),mat,x,y,z);
@@ -91,6 +101,48 @@ export function furniture(id,color){
  const sphere=(rx,ry,rz,x,y,z,mat=main)=>{const m=add(new T.SphereGeometry(1,32,20),mat,x,y,z);m.scale.set(rx,ry,rz);return m;};
  const tube=(points,r,mat=main)=>add(new T.TubeGeometry(new T.CatmullRomCurve3(points.map(p=>new T.Vector3(...p))),64,r,10,false),mat,0,0,0);
  const brass=new T.MeshStandardMaterial({color:'#a99161',metalness:.65,roughness:.35});
+
+ if(id==='curve-wood-chair'){
+  // A low, continuous veneer shell with a light four-leg frame.
+  const shell=box(.6,.075,.51,0,.405,.03,main,.075);shell.rotation.x=-.08;
+  const back=box(.6,.32,.075,0,.52,-.22,main,.085);back.rotation.x=-.24;
+  for(const x of [-.255,.255])for(const z of [-.19,.19]){const leg=cyl(.022,.39,x,.195,z,wood);leg.rotation.z=x<0?-.055:.055;leg.rotation.x=z<0?-.05:.05;}
+  box(.43,.025,.025,0,.23,-.19,wood,.01);box(.43,.025,.025,0,.23,.19,wood,.01);
+ }
+ if(id==='frame-lounge-chair'){
+  const frame=new T.MeshStandardMaterial({color:'#4b4037',roughness:.78});
+  const seat=box(.59,.13,.55,0,.405,.035,main,.07);seat.rotation.x=-.07;
+  const back=box(.62,.32,.12,0,.535,-.235,main,.065);back.rotation.x=-.18;
+  for(const x of [-.3375,.3375]){
+   for(const z of [-.245,.245]){const leg=cyl(.025,.43,x,.215,z,frame);leg.rotation.z=x<0?-.055:.055;leg.rotation.x=z<0?-.045:.045;}
+   const arm=box(.035,.035,.54,x,.57,.015,frame,.014);arm.rotation.x=-.04;
+   box(.035,.23,.035,x,.455,.22,frame,.014);
+  }
+  box(.675,.035,.035,0,.68,-.285,frame,.014);
+ }
+ if(id==='soft-arc-chair'){
+  box(.82,.22,.72,0,.28,.07,main,.16);
+  const back=box(.82,.41,.22,0,.48,-.28,main,.17);back.rotation.x=-.14;
+  sphere(.115,.27,.36,-.405,.42,.03,main);sphere(.115,.27,.36,.405,.42,.03,main);
+  box(.64,.13,.55,0,.43,.07,new T.MeshStandardMaterial({color:'#e4ddd0',roughness:1}),.11);
+  for(const x of [-.31,.31])for(const z of [-.24,.24])cyl(.035,.11,x,.055,z,wood);
+ }
+ if(id==='lean-side-table'){
+  main.roughness=.48;main.metalness=.12;
+  box(.562,.035,.34,0,.592,0,main,.025);box(.562,.035,.34,0,.0175,0,main,.025);
+  box(.035,.575,.29,-.2635,.305,0,main,.015);
+  box(.36,.018,.025,-.08,.315,-.14,main,.007);box(.36,.018,.025,-.08,.315,.14,main,.007);
+ }
+ if(id==='tier-trolley'){
+  const rail=new T.MeshStandardMaterial({color:'#8b765d',roughness:.62});
+  box(.5,.045,.35,0,.14,0,main,.045);box(.5,.045,.35,0,.48,0,main,.045);
+  for(const x of [-.225,.225])for(const z of [-.15,.15])cyl(.018,.43,x,.31,z,rail);
+  for(const x of [-.17,.17]){const handle=cyl(.018,.12,x,.575,-.15,rail);handle.rotation.z=x<0?-.22:.22;}
+  box(.34,.025,.025,0,.627,-.15,rail,.01);
+  for(const x of [-.19,.19])for(const z of [-.13,.13]){
+   const wheel=add(new T.CylinderGeometry(.038,.038,.022,20),dark,x,.038,z);wheel.rotation.z=Math.PI/2;
+  }
+ }
 
 
  const counter=new T.MeshStandardMaterial({color:'#e1ddcf',roughness:.55});
@@ -212,9 +264,44 @@ export function furniture(id,color){
   box(.8,.06,.65,0,.03,0,main,.05);
   const rope=new T.MeshStandardMaterial({color:'#d4c4a6',roughness:1});
   for(const [x,z,h] of [[-.22,-.16,1.38],[.23,.16,.82]]){cyl(.055,h,x,.06+h/2,z,rope);for(let y=.1;y<h;y+=.07)add(new T.TorusGeometry(.056,.004,6,24),rope,x,y,z,[Math.PI/2,0,0]);}
-  box(.46,.045,.4,.2,.55,.13,main,.06);box(.48,.045,.42,-.19,1.03,-.12,main,.06);
+  const rightShelf=box(.46,.045,.4,.2,.72,.13,main,.06);rightShelf.name='cat-tree-right-shelf';box(.48,.045,.42,-.19,1.03,-.12,main,.06);
   box(.48,.05,.42,-.19,1.46,-.12,main,.07);box(.4,.025,.34,-.19,1.495,-.12,new T.MeshStandardMaterial({color:'#e3d9c6',roughness:1}),.06);
-  box(.38,.32,.035,.15,.23,-.19,main,.02);box(.035,.32,.38,-.022,.23,0,main,.02);box(.035,.32,.38,.322,.23,0,main,.02);box(.38,.04,.4,.15,.41,0,main,.03);
+  box(.38,.32,.035,.15,.23,-.19,main,.02);box(.035,.32,.38,-.022,.23,0,main,.02);box(.035,.32,.38,.322,.23,0,main,.02);const houseRoof=box(.38,.04,.4,.15,.41,0,main,.03);houseRoof.name='cat-tree-house-roof';
+ }
+ if(id==='cat-tree-solid'){
+  const rope=new T.MeshStandardMaterial({color:'#d7c39e',roughness:1}),pad=new T.MeshStandardMaterial({color:'#d4d69a',roughness:1}),clear=new T.MeshPhysicalMaterial({color:'#d9eff2',transparent:true,opacity:.28,roughness:.12,side:T.DoubleSide});
+  box(.51,.045,.4,0,.0225,0,main,.035);
+  for(const [x,z,h] of [[-.14,0,1.02],[.15,.02,.77]]){cyl(.035,h,x,.045+h/2,z,rope);for(let y=.09;y<h;y+=.055)add(new T.TorusGeometry(.036,.0028,6,18),rope,x,y,z,[Math.PI/2,0,0]);}
+  box(.47,.04,.32,-.02,.38,0,main,.07);box(.42,.04,.34,.02,.7,0,main,.07);cyl(.205,.04,0,.99,0,main);cyl(.18,.025,0,1.017,0,pad);
+  const bowl=add(new T.SphereGeometry(.18,28,14,0,Math.PI*2,Math.PI/2,Math.PI/2),clear,-.14,.58,0);bowl.scale.y=.62;const rim=add(new T.TorusGeometry(.18,.014,10,36),main,-.14,.69,0);rim.rotation.x=Math.PI/2;
+ }
+ if(id==='cat-tree-macaron'){
+  const pink=new T.MeshStandardMaterial({color:'#e8abc0',roughness:.95}),blue=new T.MeshStandardMaterial({color:'#91a9dc',roughness:.9}),yellow=new T.MeshStandardMaterial({color:'#e8cf72',roughness:1}),rope=new T.MeshStandardMaterial({color:'#d5c5a9',roughness:1}),darkHole=new T.MeshStandardMaterial({color:'#50526b',roughness:1});
+  box(.75,.045,.7,0,.0225,0,pink,.05);box(.52,.36,.43,-.06,.22,0,blue,.11);add(new T.CircleGeometry(.13,32),darkHole,-.06,.24,.218);
+  for(const [x,z,h,y] of [[-.24,.05,.48,.43],[.2,.02,.7,.4],[.22,-.08,.38,.72]])cyl(.04,h,x,y,z,rope);
+  cyl(.27,.055,-.12,.47,0,yellow);cyl(.22,.045,.23,.67,.02,blue);cyl(.28,.055,0,.82,0,pink);cyl(.2,.045,-.18,1.075,0,pink);
+  const clear=new T.MeshPhysicalMaterial({color:'#d9eff2',transparent:true,opacity:.3,roughness:.1,side:T.DoubleSide});const bowl=add(new T.SphereGeometry(.18,28,14,0,Math.PI*2,Math.PI/2,Math.PI/2),clear,-.31,.62,0);bowl.scale.y=.65;
+ }
+ if(id==='cat-tree-christmas'){
+  const pink=new T.MeshStandardMaterial({color:'#eba9bf',roughness:1}),deep=new T.MeshStandardMaterial({color:'#7b394c',roughness:1}),trunk=new T.MeshStandardMaterial({color:'#6d4938',roughness:1}),gold=new T.MeshStandardMaterial({color:'#d6b14d',metalness:.35,roughness:.55});
+  cyl(.09,.3,0,.15,0,trunk);for(const [r,y,h] of [[.28,.43,.38],[.235,.7,.34],[.18,.95,.3]])add(new T.ConeGeometry(r,h,32),pink,0,y,0);
+  for(const y of [.48,.75]){add(new T.CircleGeometry(.105,32),deep,0,y,.235);add(new T.TorusGeometry(.11,.018,10,32),pink,0,y,.238);}
+  const star=new T.Shape();for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,r=i%2?.045:.1;(i?star.lineTo:star.moveTo).call(star,Math.cos(a)*r,Math.sin(a)*r);}star.closePath();add(new T.ExtrudeGeometry(star,{depth:.018,bevelEnabled:false}),gold,0,1.19,0);
+  for(const [x,y,z] of [[-.24,.42,.04],[.21,.66,.03],[-.15,.9,.06]])sphere(.035,.035,.035,x,y,z,new T.MeshStandardMaterial({color:'#f4e9e7',roughness:1}));
+ }
+ if(id==='cat-tree-venus'){
+  const green=new T.MeshStandardMaterial({color:'#72964c',roughness:1}),leaf=new T.MeshStandardMaterial({color:'#8aaa57',roughness:1}),red=new T.MeshStandardMaterial({color:'#a83f48',roughness:1}),inside=new T.MeshStandardMaterial({color:'#6d2532',roughness:1});
+  box(.7,.055,.7,0,.0275,0,green,.08);tube([[0,.05,0],[-.03,.45,0],[.03,.85,0],[0,1.35,0]],.045,green);
+  const branches=[[[-.01,.32,0],[-.28,.52,0]],[[-.01,.58,0],[.28,.78,0]],[[.01,.9,0],[-.25,1.08,0]],[[.01,1.12,0],[.23,1.28,0]]];for(const p of branches)tube(p,.035,green);
+  for(const [x,y,z,s,c] of [[-.28,.54,0,.17,red],[.29,.8,0,.2,red],[-.24,1.1,0,.16,leaf],[.02,1.42,0,.23,red]]){const bed=add(new T.TorusGeometry(s,.055,14,40),c,x,y,z);bed.rotation.x=Math.PI/2;const base=sphere(s*.9,.045,s*.75,x,y,z,inside);}
+  const pod=add(new T.SphereGeometry(.19,28,18),red,.3,.78,0);pod.scale.set(1,.85,.72);add(new T.CircleGeometry(.12,32),inside,.3,.8,.142);
+  for(const [x,y,z,a] of [[-.17,.32,.05,-.4],[.2,.18,.02,.5],[-.19,.88,.03,-.6]]){const l=sphere(.13,.025,.065,x,y,z,leaf);l.rotation.z=a;}
+ }
+ if(id==='cat-barrel-lime'){
+  const lime=new T.MeshStandardMaterial({color:'#b8cf63',roughness:1}),cream=new T.MeshStandardMaterial({color:'#eef0c8',roughness:1}),inside=new T.MeshStandardMaterial({color:'#46552f',roughness:1});
+  box(.38,.86,.38,0,.43,0,lime,.1);for(const y of [.23,.64]){add(new T.CircleGeometry(.105,32),inside,0,y,.198);add(new T.TorusGeometry(.11,.018,10,32),lime,0,y,.201);}
+  for(const [y,r] of [[.43,.09],[.84,.075]]){const slice=add(new T.CylinderGeometry(r,r,.026,32),cream,.1,y,.205);slice.rotation.x=Math.PI/2;for(let i=0;i<8;i++){const a=i*Math.PI/4;const spoke=box(.008,r*.8,.01,.1+Math.cos(a)*r*.38,y+Math.sin(a)*r*.38,.222,cream,.002);spoke.rotation.z=a;}}
+  const straw=cyl(.018,.25,-.12,.96,0,cream);straw.rotation.z=-.22;sphere(.035,.055,.025,0,.56,.215,cream);
  }
  if(id==='cat-side-table'){
   box(.6,.045,.5,0,.5275,0,main,.045);box(.6,.035,.5,0,.0175,0,main,.03);
@@ -251,6 +338,6 @@ export function furniture(id,color){
   box(.55,.055,.32,-.22,.095,0,new T.MeshStandardMaterial({color:'#9b9c86',roughness:1}),.05);box(.035,.33,.38,.17,.23,0,main,.015);
   for(let x=.23;x<.54;x+=.07)box(.025,.23,.025,x,.19,.18,wood,.008);
  }
- root.userData={catalogId:id,name:def.name,color:color||def.color};return root;
+ root.userData={catalogId:id,name:def.name,color:def.fixedColor?def.color:color||def.color,fixedColor:!!def.fixedColor};return root;
 }
-export function setFinish(obj,color,roughness=.88){obj.traverse(m=>{if(m.isMesh){const mats=Array.isArray(m.material)?m.material:[m.material];mats.forEach(mat=>{if(mat.name==='finish'||obj.userData.imported){mat.color?.set(color);mat.roughness=roughness;if(mat.name==='finish'){mat.map=null;mat.bumpMap=null;mat.normalMap=null;}mat.needsUpdate=true;}});}});obj.userData.color=color;obj.userData.roughness=roughness;delete obj.userData.surface;}
+export function setFinish(obj,color,roughness=.88){if(obj.userData.fixedColor)return false;obj.traverse(m=>{if(m.isMesh){const mats=Array.isArray(m.material)?m.material:[m.material];mats.forEach(mat=>{if(mat.name==='finish'||obj.userData.imported){mat.color?.set(color);mat.roughness=roughness;if(mat.name==='finish'){mat.map=null;mat.bumpMap=null;mat.normalMap=null;}mat.needsUpdate=true;}});}});obj.userData.color=color;obj.userData.roughness=roughness;delete obj.userData.surface;return true;}

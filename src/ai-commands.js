@@ -29,7 +29,7 @@ export function applyPlan(design,raw){
   if(c.action==='moveFurniture'){item.position=[...c.position];spatial.add(c.id);}
   if(c.action==='rotateFurniture'){item.rotation=c.degrees*Math.PI/180;spatial.add(c.id);}
   if(c.action==='scaleFurniture'){item.scale=[c.scale,c.scale,c.scale];spatial.add(c.id);}
-  if(c.action==='changeColor'){item.color=c.color;delete item.surface;}
+  if(c.action==='changeColor'){if(catalog.find(d=>d.id===item.id)?.fixedColor)throw Error('此家具使用固定造型配色，不能變更顏色');item.color=c.color;delete item.surface;}
  }
  validateDesign(next);
  if(spatial.size&&next.items.some(i=>i.imported))throw Error('場景含匯入模型，暫停 AI 空間移動以避免未檢查的碰撞；仍可修改內建家具顏色');
