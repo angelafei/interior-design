@@ -1,13 +1,10 @@
 # FORMA 室內設計工作室
 
 [![CI](https://github.com/angelafei/interior-design/actions/workflows/ci.yml/badge.svg)](https://github.com/angelafei/interior-design/actions/workflows/ci.yml)
-[![Deploy](https://github.com/angelafei/interior-design/actions/workflows/pages.yml/badge.svg)](https://github.com/angelafei/interior-design/actions/workflows/pages.yml)
 
 Three.js + Vite 打造的瀏覽器 3D 室內設計工作室，支援家具配置、房型與材質調整、方案分享，以及經嚴格驗證的 AI 設計指令。介面採繁體中文。
 
-**[開啟線上 Demo](https://angelafei.github.io/interior-design/)** · [系統架構與技術決策](./docs/ARCHITECTURE.md) · [測試策略](./TESTING.md)
-
-> GitHub Pages Demo 提供完整編輯器與明確標示的離線 AI 示範。真實 LLM 功能需要可保護伺服器金鑰的 Node 部署，不能由純靜態 Pages 提供。
+[系統架構與技術決策](./docs/ARCHITECTURE.md) · [測試策略](./TESTING.md)
 
 ## 啟動
 
