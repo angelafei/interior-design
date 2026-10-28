@@ -35,7 +35,7 @@ test('searches and adds furniture, then supports undo and view switching', async
 test('opens AI assistant and applies the explicit offline demo', async ({page}) => {
   await page.locator('#open-ai').click();
   await expect(page.locator('#ai-panel')).toBeVisible();
-  await expect(page.locator('#ai-connection')).toContainText(/尚未連線|後端未連線/);
+  await expect(page.locator('#ai-connection')).toContainText(/尚未設定|後端未連線/);
   await page.locator('#ai-demo').click();
   await expect(page.locator('#ai-messages')).toContainText('已套用');
   await expect(page.locator('#ai-comparison')).toBeVisible();

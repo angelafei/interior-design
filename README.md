@@ -73,9 +73,9 @@ V 選取、G 移動、R 旋轉、S 縮放；Delete 刪除；Ctrl/⌘ Z 復原，
 
 ## AI Interior Assistant
 
-右上角「AI 設計助理」可提交自然語言需求。保留目前 Three.js 架構，由後端呼叫 OpenAI Responses API 的 [Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs)，產生 JSON 指令；前後端皆以 Zod 與場景驗證器檢查，通過後整批套用。沒有執行模型產生的 JavaScript。
+右上角「AI 設計助理」可提交自然語言需求。保留目前 Three.js 架構，由後端呼叫 Groq Chat Completions API 的 [Structured Outputs](https://console.groq.com/docs/structured-outputs)，產生 JSON 指令；前後端皆以 Zod 與場景驗證器檢查，通過後整批套用。沒有執行模型產生的 JavaScript。Groq 額度用完、連線失敗或回應未通過驗證時，系統會明確提示並自動改用離線固定示範。
 
-將 `.env.example` 複製為 `.env`，設定伺服器端 `OPENAI_API_KEY` 與 `OPENAI_MODEL`（帳戶可用、支援 Responses Structured Outputs 的模型），再重新啟動開發伺服器。不要將金鑰加上 `VITE_` 前綴。尚未設定時可使用明確標示的離線固定配色示範；示範不理解自由文字。
+將 `.env.example` 複製為 `.env`，設定伺服器端 `GROQ_API_KEY`；預設模型為 `openai/gpt-oss-20b`，也可用 `GROQ_MODEL` 覆寫。重新啟動開發伺服器後生效。不要將金鑰加上 `VITE_` 前綴或提交到 Git。尚未設定時可使用明確標示的離線固定配色示範；示範不理解自由文字。
 
 - 支援新增、刪除、移動、旋轉、縮放內建家具，以及家具、牆面與地板顏色。
 - 房間資訊與家具目錄隨請求提供；每次請求依目前場景產生一批操作，尚非多輪工具呼叫 Agent，聊天紀錄不送入下一次請求。

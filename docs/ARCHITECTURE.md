@@ -11,7 +11,8 @@ flowchart LR
   V --> T
   S --> L[(localStorage / JSON)]
   UI --> A[Vite AI middleware]
-  A --> O[OpenAI Responses API]
+  A --> O[Groq Chat Completions API]
+  A -->|Groq 失敗| F[離線固定示範]
   O --> A
   A --> V
 ```
@@ -28,7 +29,7 @@ FORMA 是瀏覽器端優先的單頁 3D 編輯器。Three.js 負責場景、相�
 | 資料驗證 | `src/design-validation.js` | 方案 JSON 的信任邊界 |
 | 編輯功能 | `src/object-editing.js`、`src/editor-features.js` | 多選、鎖定、儲存、測量與分享 |
 | AI 前端 | `src/ai-panel.js`、`src/ai-commands.js` | 建立安全場景摘要、驗證並原子套用指令 |
-| AI 後端 | `server/ai-service.js` | 保護金鑰、呼叫 Responses API、解析 Structured Outputs |
+| AI 後端 | `server/ai-service.js` | 保護 Groq 金鑰、呼叫 Chat Completions API、解析 Structured Outputs、失敗時切換離線示範 |
 
 ## 主要資料流
 
