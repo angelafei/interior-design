@@ -1,4 +1,5 @@
 import {test, expect} from '@playwright/test';
+import {activeCatalog} from '../src/models.js';
 
 test.beforeEach(async ({page}) => {
   await page.addInitScript(() => localStorage.setItem('forma-onboarding-v1', 'done'));
@@ -48,4 +49,25 @@ test('fixed-color cat furniture disables color controls', async ({page}) => {
   await expect(page.locator('.custom-color')).toBeHidden();
   await expect(page.locator('#custom-color')).toBeDisabled();
   await expect(page.locator('[data-finish]').first()).toBeDisabled();
+});
+
+test('adds every available catalog item through the UI', async ({page}, testInfo) => {
+  test.skip(testInfo.project.name.includes('mobile'), '完整素材庫逐款測試由桌面版執行；手機版另有核心加入流程。');
+  test.setTimeout(180_000);
+
+  const countText = await page.locator('#object-count').textContent();
+  const initial = Number(countText.match(/\d+/)[0]);
+  const search = page.getByLabel('搜尋傢具');
+
+  for (const item of activeCatalog) {
+    await test.step(`加入 ${item.name}`, async () => {
+      await search.fill(item.name);
+      await expect(page.locator('#result-count')).toHaveText('1 件傢具');
+      await page.getByTitle(`加入 ${item.name}`).click();
+      await expect(page.locator('#selected-name')).toHaveText(item.name);
+      await expect(page.locator('#object-count')).toHaveText(`${initial + 1} 個物件`);
+      await page.locator('#undo').click();
+      await expect(page.locator('#object-count')).toHaveText(`${initial} 個物件`);
+    });
+  }
 });
