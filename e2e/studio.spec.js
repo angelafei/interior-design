@@ -53,7 +53,7 @@ test('fixed-color cat furniture disables color controls', async ({page}) => {
 
 test('adds every available catalog item through the UI', async ({page}, testInfo) => {
   test.skip(testInfo.project.name.includes('mobile'), '完整素材庫逐款測試由桌面版執行；手機版另有核心加入流程。');
-  test.setTimeout(180_000);
+  test.setTimeout(process.env.CI ? 360_000 : 180_000);
 
   const countText = await page.locator('#object-count').textContent();
   const initial = Number(countText.match(/\d+/)[0]);

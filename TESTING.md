@@ -54,6 +54,7 @@ GLB 測試以 Node FileReader 適配器提供 Blob 讀取，沒有測試真實�
 - AI 面板 Groq 連線狀態、額度／連線／驗證失敗時自動切換，與離線固定示範套用。
 - Pixel 7 viewport 沒有頁面級橫向溢出。
 - 桌面版從 `activeCatalog` 自動讀取所有可新增家具，逐款經由搜尋與素材卡加入場景，確認選取名稱及物件數，再復原後測試下一款；新增家具會自動納入。
+- GitHub Actions 以單一 Playwright worker 順序執行 3D UI 測試，避免多個 WebGL 場景爭用 CI 主機資源造成假性逾時。
 
 GitHub Actions 在每次 push 與 pull request 使用 Chromium 執行上述流程，失敗時保留 Playwright 報告。
 
